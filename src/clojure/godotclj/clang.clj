@@ -11,6 +11,14 @@
             [tech.v3.datatype.struct :as dtype-struct])
   (:import [java.io ByteArrayInputStream ByteArrayOutputStream]))
 
+(defn cache-file
+  [& parts]
+  (apply io/file "build/cache" parts))
+
+(defn layout-file
+  [& parts]
+  (apply io/file "build/gen" parts))
+
 (defn enum-values
   [enum-inner]
   (m/match enum-inner
@@ -109,14 +117,14 @@
 
 (defn read-records
   [resource-name]
-  (-> (slurp (io/resource resource-name))
+  (-> (slurp (layout-file resource-name))
       (str/split #"\n")
       (->> (partition-by #(re-find #"^.*Record Layout.*$" %))
            (remove #(re-find #"^.*Record Layout.*$" (first %))))))
 
 (defn read-records-json
   [resource-name]
-  (walk/keywordize-keys (json/read-str (slurp (io/resource resource-name)))))
+  (walk/keywordize-keys (json/read-str (slurp (layout-file resource-name)))))
 
 (defn names
   [records]
@@ -409,8 +417,8 @@
 
 (defn emit-fns
   [cache records-json fns]
-  (let [fns (or (when (.exists (io/file cache))
-                  (<-transit (slurp cache)))
+  (let [fns (or (when (.exists (cache-file cache))
+                  (<-transit (slurp (cache-file cache))))
                 (into {}
                       (for [f fns]
                         (let [fn-name                        (if (string? f)
@@ -428,7 +436,7 @@
                                           (->rettype (type->keyword (or qt rt)))))
 
                             :argtypes (apply emit-fn-arg-types @records-json definition (reduce concat options))}]))))]
-    (spit (doto (io/file cache)
+    (spit (doto (cache-file cache)
             (io/make-parents))
           (->transit fns))
     fns))
@@ -598,10 +606,10 @@
 
 (defn emit*
   [{:keys [cache records functions]}]
-  (if (.exists (io/file cache))
-    (<-transit (slurp cache))
+  (if (.exists (cache-file cache))
+    (<-transit (slurp (cache-file cache)))
     (let [result (emit-fns cache (delay (read-records-json records)) @functions)]
-      (spit (doto (io/file cache)
+      (spit (doto (cache-file cache)
               (io/make-parents))
             (->transit result))
       result)))
@@ -643,8 +651,8 @@
 (defn define-structs
   [structs]
   (let [{:keys [cache names records]} structs
-        cache-json                    (when (.exists (io/file cache))
-                                        (<-transit (slurp cache)))
+        cache-json                    (when (.exists (cache-file cache))
+                                        (<-transit (slurp (cache-file cache))))
         records-txt                   (delay (read-records (:txt records)))
         records-json                  (delay (read-records-json (:json records)))]
 
@@ -657,21 +665,23 @@
                        [k (ffi-clang/defstruct-from-layout
                             k
                             (typedef->struct @records-json (layout @records-txt struct-name)))]))]
-        (spit (doto (io/file cache)
+        (spit (doto (cache-file cache)
                 (io/make-parents))
               (->transit result))
         (into {} result)))))
 
 (defn export-wrapper-fns
-  [{:keys [functions records output]}]
+  [{:keys [functions records output]} dest]
   (let [records-json (read-records-json records)]
-    (spit (:header output) (emit-header records-json :fns @functions))
-    (spit (:implementation output) (emit-implementation records-json :fns @functions))))
+    (spit (io/file dest (:header output))
+          (emit-header records-json :fns @functions))
+    (spit (io/file dest (:implementation output))
+          (emit-implementation records-json :fns @functions))))
 
 (defn enums-map
   [{:keys [cache records types]}]
-  (or (when (.exists (io/file cache))
-        (<-transit (slurp cache)))
+  (or (when (.exists (cache-file cache))
+        (<-transit (slurp (cache-file cache))))
       (let [records-json (read-records-json (:json records))
             result       (into {}
                                (for [t types]
@@ -680,7 +690,7 @@
                                                  (range)
                                                  (mapv #(csk/->kebab-case-keyword % :separator \_) (enum-values (:inner (get-def records-json :name t :kind "EnumDecl")))
                                                        )))]))]
-        (spit (doto (io/file cache)
+        (spit (doto (cache-file cache)
                 (io/make-parents))
               (->transit result))
         result)))

@@ -1,6 +1,7 @@
 (ns godotclj.gen-wrapper
   (:require [godotclj.clang :as clang]
-            [godotclj.defs :as defs]
-            [godotclj.insn]))
+            [godotclj.defs :as defs]))
 
-(clang/export-wrapper-fns defs/godot-function-bindings)
+(defn generate
+  [dest]
+  (clang/export-wrapper-fns defs/godot-function-bindings dest))

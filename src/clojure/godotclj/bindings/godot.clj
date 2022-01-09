@@ -8,39 +8,15 @@
             [tech.v3.datatype :as dtype]
             [godotclj.proto :as proto]
             [tech.v3.datatype.native-buffer :as native-buffer]
-            [tech.v3.datatype.struct :as dtype-struct])
+            [tech.v3.datatype.struct :as dtype-struct]
+            [godotclj.bindings.types :as types])
   (:import [tech.v3.datatype.ffi Pointer]
            [clojure.lang Indexed Seqable]))
-
-(def godot-struct-defs*
-  (clang/define-structs defs/godot-structs))
-
-(def wrapper-struct-defs*
-  (clang/define-structs defs/wrapper-structs))
-
-(def callback-struct-defs*
-  (clang/define-structs defs/callback-structs))
-
-(defn validate-defs!
-  [defs]
-  (doseq [[k v] defs]
-    (assert (pos? (:datatype-size v)) (str k " has zero size!")))
-  nil)
-
-(validate-defs! godot-struct-defs*)
-(validate-defs! wrapper-struct-defs*)
-(validate-defs! callback-struct-defs*)
-
-(def enums
-  (clang/enums-map defs/enums))
 
 (dtype-struct/define-datatype! :method-reference
   [{:name :id :datatype :int64}])
 
-(def fns
-  (clang/emit defs/function-bindings))
-
-(defonce ^:private lib (dtype-ffi/library-singleton #'fns))
+(defonce ^:private lib (dtype-ffi/library-singleton #'types/fns))
 
 (defn set-library-instance!
   [lib-instance]
@@ -55,7 +31,7 @@
   body)
 
 ;; preventing "Method too large!"
-(let [[fns-1 fns-2 fns-3] (partition-all 300 fns)]
+(let [[fns-1 fns-2 fns-3] (partition-all 300 types/fns)]
   (def fns-1 fns-1)
   (def fns-2 fns-2)
   (def fns-3 fns-3))
@@ -470,7 +446,7 @@
 (defn get-variant-type
   [v]
   (let [result (godot_variant_get_type_wrapper v)]
-    (get-in enums [:godot-variant-type result])))
+    (get-in types/enums [:godot-variant-type result])))
 
 (defrecord Variant [variant variant-type])
 
