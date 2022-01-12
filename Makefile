@@ -15,7 +15,7 @@ build/lib/natives/$(ARCH)/libgodotclj_gdnative.so: build/obj/jvm.o build/obj/gdn
 
 .PHONY: clean
 clean:
-	rm -fr build target
+	rm -fr build target classes
 	make -C test-resources/natives-test clean
 
 build/gen/src/c/wrapper.h build/gen/src/c/wrapper.c: build/gen/godot_bindings.txt build/gen/godot_bindings.json

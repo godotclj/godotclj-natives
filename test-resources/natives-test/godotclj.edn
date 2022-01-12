@@ -1,1 +1,2 @@
-{:main {:jvm godotclj.natives-test.main-jvm/register-methods}}
+{:main      {:jvm godotclj.natives-test.main-jvm/register-methods}
+ :callbacks {:namespace godotclj.natives-test.main-jvm}}

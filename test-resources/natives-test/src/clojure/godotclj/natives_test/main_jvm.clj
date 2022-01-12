@@ -18,6 +18,10 @@
   [type-name]
   (dtype-struct/new-struct type-name {:container-type :native-heap}))
 
+(defn instance_method_callback
+  [arg-ptr]
+  (println "godotclj.natives-test.main-jvm/instance_method_callback" :arg-ptr arg-ptr))
+
 (defn register-methods
   [p-h]
   (future @repl)
