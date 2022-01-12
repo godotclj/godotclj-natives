@@ -1,15 +1,7 @@
 (ns godotclj.ffi.gdnative
   (:require [godotclj.ffi.clang :as clang]
             [godotclj.ffi.defs :as defs]
-            ;; TODO clean up NS
-            [tech.v3.datatype.struct :as dtype-struct]
-            [tech.v3.datatype.protocols]
-            [tech.v3.datatype.ffi :as dtype-ffi]
-            [tech.v3.datatype :as dtype]
-            [tech.v3.datatype.native-buffer :as native-buffer]
-            [tech.v3.datatype.struct :as dtype-struct])
-  (:import [tech.v3.datatype.ffi Pointer]
-           [clojure.lang Indexed Seqable]))
+            [tech.v3.datatype.ffi :as dtype-ffi]))
 
 (def godot-struct-defs*
   (clang/define-structs defs/godot-structs))
