@@ -30,7 +30,7 @@
         JAVA_TOOL_OPTIONS (or (System/getenv "JAVA_TOOL_OPTIONS") "")]
     (natives/extract-native-libraries)
 
-    (let [result (process `[(godot-path) ~@args]
+    (let [result (process `[~(godot-path) ~@args]
                           {:err :inherit
                            :out :inherit
                            :env (merge (into {} (System/getenv))
