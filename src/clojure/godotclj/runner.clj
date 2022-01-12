@@ -18,6 +18,11 @@
   []
   (absolute-class-path (System/getProperty "java.class.path")))
 
+(defn godot-path
+  []
+  (or (System/getProperty "godotclj.godot.path")
+      "godot"))
+
 (defn start
   [& args]
   (let [JAVA_HOME         (java-home)
@@ -25,7 +30,7 @@
         JAVA_TOOL_OPTIONS (or (System/getenv "JAVA_TOOL_OPTIONS") "")]
     (natives/extract-native-libraries)
 
-    (let [result (process `["godot" ~@args]
+    (let [result (process `[(godot-path) ~@args]
                           {:err :inherit
                            :out :inherit
                            :env (merge (into {} (System/getenv))
