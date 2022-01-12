@@ -19,6 +19,7 @@
   (dtype-struct/new-struct type-name {:container-type :native-heap}))
 
 (defn instance_method_callback
+  "Set in godotclj.edn"
   [arg-ptr]
   (println "godotclj.natives-test.main-jvm/instance_method_callback" :arg-ptr arg-ptr))
 
