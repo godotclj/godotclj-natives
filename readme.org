@@ -2,6 +2,13 @@
 
   godotclj.config.path: location of edn config file (default: 'godotclj.edn')
 
+#+BEGIN_SRC sh
+  export JAVA_TOOL_OPTIONS=-Dgodotclj.config.path=$DIR/../godotclj-test.edn
+
+  clj -M -e "(require 'godotclj.runner) (godotclj.runner/start \"-v\")"
+#+END_SRC
+
+
 These implement Clojure bindings for the godot engine.
 
 See https://github.com/tristanstraub/thecreeps-godotclj to see how to use it.
