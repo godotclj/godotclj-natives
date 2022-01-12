@@ -11,4 +11,4 @@
     (let [f (requiring-resolve (symbol namespace-name function-name))]
       (f p-args))
     (catch Throwable t
-      (println :t t))))
+      (println t))))

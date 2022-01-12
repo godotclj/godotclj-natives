@@ -4,7 +4,6 @@
 
 (defn extract-native-libraries
   []
-  (NativeLoader/loadLibrary "godotclj_wrapper" nil)
   (NativeLoader/loadLibrary "godotclj_gdnative" nil)
   (.mkdirs (io/file "natives"))
   (doseq [f (filter #(.isFile %) (file-seq (.getNativeDir (NativeLoader/getJniExtractor))))]

@@ -1,5 +1,13 @@
 #include <stdio.h>
+#include <string.h>
 #include <callback.h>
+
+char callback_namespace[256] = "godotclj.ffi.callback";
+
+void set_callback_namespace(const char* namespace) {
+  strncpy(callback_namespace, namespace, sizeof(callback_namespace) - 1);
+  callback_namespace[sizeof(callback_namespace) - 1] = '\0';
+}
 
 #ifdef RUNTIME_GENERATION
   #define CALLBACK(name, args)
@@ -13,7 +21,7 @@
 #else
   #include <jvm.h>
 
-  #define CALLBACK(name, args) clojure_call("godotclj.bindings.godot", #name, args);
+  #define CALLBACK(name, args) clojure_call(callback_namespace, #name, args);
 #endif
 
 void* CALLBACK_PREFIX(godot_create_func)(godot_object *ob, void* data) {

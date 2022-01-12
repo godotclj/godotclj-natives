@@ -19,7 +19,7 @@
                 :version   version
                 :basis     basis
                 :src-dirs  ["src/clojure"]})
-  (b/copy-dir {:src-dirs   ["src/clojure" "build/lib" "build/godot-headers"]
+  (b/copy-dir {:src-dirs   ["src/clojure" "build/lib" "build/godot-headers" "build/gen"]
                :target-dir class-dir})
   (b/jar {:class-dir class-dir
           :jar-file jar-file}))

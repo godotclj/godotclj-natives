@@ -1,4 +1,4 @@
-(ns godotclj.clang
+(ns godotclj.ffi.clang
   (:require [camel-snake-kebab.core :as csk]
             [clojure.data.json :as json]
             [clojure.java.io :as io]
@@ -17,7 +17,8 @@
 
 (defn layout-file
   [& parts]
-  (apply io/file "build/gen" parts))
+  (or (apply io/resource parts)
+      (apply io/file "build/gen" parts)))
 
 (defn enum-values
   [enum-inner]

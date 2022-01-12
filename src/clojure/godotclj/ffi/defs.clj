@@ -1,5 +1,5 @@
-(ns godotclj.defs
-  (:require [godotclj.clang :as clang]))
+(ns godotclj.ffi.defs
+  (:require [godotclj.ffi.clang :as clang]))
 
 (defn fn->name
   [fn-name]
@@ -13,12 +13,12 @@
    :output    {:header         "wrapper.h"
                :implementation "wrapper.c"}
    :functions (delay
-                (let [godot-bindings-json (godotclj.clang/read-records-json "godot_bindings.json")]
-                  (concat (->> (godotclj.clang/gdnative-api-methods godot-bindings-json)
+                (let [godot-bindings-json (clang/read-records-json "godot_bindings.json")]
+                  (concat (->> (clang/gdnative-api-methods godot-bindings-json)
                                (remove (comp #{"godot_get_class_constructor"} first))
                                vec)
-                          (godotclj.clang/gdnative-api-methods-1-2 godot-bindings-json)
-                          (godotclj.clang/gdnative-nativescript-methods godot-bindings-json)
+                          (clang/gdnative-api-methods-1-2 godot-bindings-json)
+                          (clang/gdnative-nativescript-methods godot-bindings-json)
                           [["godot_get_class_constructor" {:return {:wrapped?   true
                                                                     :wrapper    {:name "godot_class_constructor_wrapper"}
                                                                     :arg-type   "godot_class_constructor_wrapper*"
@@ -35,7 +35,8 @@
                        "get_godot_instance_destroy_func"
                        "get_godot_property_set_func"
                        "get_godot_property_get_func"
-                       "get_godot_instance_method"])}])
+                       "get_godot_instance_method"
+                       "set_callback_namespace"])}])
 
 (def godot-structs
   {:cache   "godot-structs.json"

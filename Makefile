@@ -16,11 +16,12 @@ build/lib/natives/$(ARCH)/libgodotclj_gdnative.so: build/obj/jvm.o build/obj/gdn
 .PHONY: clean
 clean:
 	rm -fr build target
+	make -C test-resources/natives-test clean
 
 build/gen/src/c/wrapper.h build/gen/src/c/wrapper.c: build/gen/godot_bindings.txt build/gen/godot_bindings.json
 	mkdir -p $(shell dirname $@)
 	PATH=$(JAVA_PATH) \
-	clojure -A:gen -M -e "(require 'godotclj.gen-wrapper) (godotclj.gen-wrapper/generate \"$(shell dirname $@)\")"
+	clojure -A:gen -M -e "(require 'godotclj.ffi.generator) (godotclj.ffi.generator/generate-wrapper \"$(shell dirname $@)\")"
 
 target/classes/godotclj/%.class: src/clojure/godotclj/%.clj
 	mkdir -p $(shell dirname $@)
@@ -32,9 +33,9 @@ build/godot-headers/api.json: godot-headers/api.json
 	cp $< $@
 
 LAYOUTS=
-LAYOUTS=build/gen/godot_bindings.txt build/gen/godot_bindings.json
-LAYOUTS=build/gen/wrapper.txt build/gen/wrapper.json
-LAYOUTS=build/gen/callback.txt build/gen/callback.json
+LAYOUTS += build/gen/godot_bindings.txt build/gen/godot_bindings.json
+LAYOUTS += build/gen/wrapper.txt build/gen/wrapper.json
+LAYOUTS += build/gen/callback.txt build/gen/callback.json
 
 target/godotclj-natives.jar: build/lib/natives/$(ARCH)/libgodotclj_gdnative.so build/godot-headers/api.json target/classes/godotclj/loader.class $(LAYOUTS)
 	mkdir -p $(shell dirname $@)

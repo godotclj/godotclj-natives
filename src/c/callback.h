@@ -5,6 +5,8 @@
 
 #define CALLBACK_PREFIX(name) GODOTCLJ_##name
 
+void set_callback_namespace(const char* namespace);
+
 typedef struct instance_method_callback_args {
   godot_object * ob;
   void * method_data;

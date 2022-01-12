@@ -1,10 +1,10 @@
 (ns godotclj.main-jvm
-  (:require [godotclj.bindings.godot :as godot]
-            [godotclj.clang]
-            [godotclj.core]
-            [godotclj.defs :as defs]
-            [godotclj.proto :as proto]
-            [tech.v3.datatype.ffi :as dtype-ffi]))
+  (:require [godotclj.ffi.gdnative :as gdnative]
+            [godotclj.ffi.clang :as clang]
+            [godotclj.ffi.defs :as defs]
+            [godotclj.main :as main]
+            [tech.v3.datatype.ffi :as dtype-ffi])
+  (:import [tech.v3.datatype.ffi Pointer]))
 
 ;; The following is automatically configured by dtype-next,
 ;; based on "java --add-modules=jdk.incubator.foreign"
@@ -13,12 +13,9 @@
 ;;       (dtype-ffi/jna-ffi?)
 ;;       (require '[tech.v3.datatype.ffi.jna]))
 
-;; force jna, so that i know how function pointers work
-(require 'godotclj.jna-model)
-
 (def libgodotclj-def
   (dtype-ffi/define-library
-    (godotclj.clang/emit defs/function-bindings)
+    (clang/emit defs/function-bindings)
     nil
     {:libraries ["godotclj_gdnative"]}))
 
@@ -27,7 +24,10 @@
 
 (defn godot_nativescript_init_clojure
   [p-h]
-  (godot/set-library-instance! libgodotclj-inst)
+  (let [p-h (Pointer. p-h)]
+    (gdnative/set-library-instance! libgodotclj-inst)
 
-  (let [main (godotclj.core/get-main :jvm)]
-    (main (proto/->ptr p-h))))
+    (let [config (main/get-config)
+          main   (main/get-main config {:runtime :jvm})]
+      (gdnative/set_callback_namespace (dtype-ffi/string->c (name (get-in config [:callbacks :namespace]))))
+      (main p-h))))
