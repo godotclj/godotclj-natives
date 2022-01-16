@@ -1,0 +1,8 @@
+{:paths #{"src/clojure" "test"}
+ :deps  {io.github.godotclj/godotclj {:local/root "../../target/godotclj-natives.jar"}
+
+         lambdaisland/kaocha         {:mvn/version "1.60.972"}
+
+         nrepl/nrepl                 {:mvn/version "0.8.3"}
+         refactor-nrepl              {:mvn/version "2.5.1"}
+         cider/cider-nrepl           {:mvn/version "0.26.0"}}}

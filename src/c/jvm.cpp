@@ -138,7 +138,7 @@ extern "C" {
     pthread_mutex_unlock(&info_lock);
 
     // TOOD see if stringUTF must be freed
-    result = java_call("godotclj/loader", "clojure_call", namespace_name, function_name, arg);
+    result = java_call("godotclj/ffi/loader", "clojure_call", namespace_name, function_name, arg);
 
     pthread_mutex_lock(&info_lock);
     if (--thread_lock_count == 0) {
