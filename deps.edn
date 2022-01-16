@@ -22,9 +22,6 @@
                  backtick/backtick                   {:mvn/version "0.3.4"}
                  fipp                                {:mvn/version "0.6.24"}
 
-                 com.tristanstraub/godotclj-tscn     {:git/url "https://github.com/godotclj/godotclj-tscn"
-                                                      :sha     "8e075bf13caf6983973d2fc378937efdafdccf46"}
-
                  ch.qos.logback/logback-classic      {:mvn/version "1.2.3"}}
  :aliases       {:gen           {:extra-paths #{"build/gen"}}
                  :test          {:extra-paths #{"test" "test-resources"}
