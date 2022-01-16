@@ -1,4 +1,4 @@
-(ns godotclj.loader
+(ns godotclj.ffi.loader
   (:gen-class
    :methods [^:static [clojure_call [String String long] void]]))
 

@@ -1,4 +1,4 @@
-(ns godotclj.ffi.callback)
+(ns godotclj.ffi.callback-stub)
 
 (defn instance_method_callback
   [arg-ptr]

@@ -1,4 +1,4 @@
-(ns godotclj.natives
+(ns godotclj.ffi.natives
   (:require [clojure.java.io :as io])
   (:import [org.scijava.nativelib NativeLoader]))
 

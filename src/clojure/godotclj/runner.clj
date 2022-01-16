@@ -2,7 +2,7 @@
   (:require [babashka.process :refer [process check]]
             [clojure.java.io :as io]
             [clojure.string :as str]
-            [godotclj.natives :as natives]))
+            [godotclj.ffi.natives :as natives]))
 
 (defn absolute-class-path
   [cp]

@@ -2,7 +2,7 @@
 #include <string.h>
 #include <callback.h>
 
-char callback_namespace[256] = "godotclj.ffi.callback";
+char callback_namespace[256] = "godotclj.ffi.callback-stub";
 
 void set_callback_namespace(const char* namespace) {
   strncpy(callback_namespace, namespace, sizeof(callback_namespace) - 1);

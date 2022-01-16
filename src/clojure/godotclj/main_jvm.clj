@@ -15,7 +15,7 @@
 
 (def libgodotclj-def
   (dtype-ffi/define-library
-    (clang/emit defs/function-bindings)
+    gdnative/fns
     nil
     {:libraries ["godotclj_gdnative"]}))
 

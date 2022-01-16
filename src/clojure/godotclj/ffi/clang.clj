@@ -4,21 +4,17 @@
             [clojure.java.io :as io]
             [clojure.string :as str]
             [clojure.walk :as walk]
-            [cognitect.transit :as transit]
             [com.stuartsierra.dependency :as dep]
             [meander.epsilon :as m]
             [tech.v3.datatype.ffi.clang :as ffi-clang]
             [tech.v3.datatype.struct :as dtype-struct])
   (:import [java.io ByteArrayInputStream ByteArrayOutputStream]))
 
-(defn cache-file
-  [& parts]
-  (apply io/file "build/cache" parts))
+
 
 (defn layout-file
   [& parts]
-  (or (apply io/resource parts)
-      (apply io/file "build/gen" parts)))
+  (apply io/resource parts))
 
 (defn enum-values
   [enum-inner]
@@ -169,7 +165,7 @@
         arg-types         (mapv (comp :qualType :type) pars)
         arg-names         (mapv :name pars)
         arg-list          (str "(" (str/join ", " arg-types) ")")]
-    (assert fn-def "Function not found")
+    (assert fn-def (format "Function not found %s" fn-name))
     (assert (str/ends-with? fn-type arg-list))
     {:name        fn-name
      :return-type (str/trim (subs fn-type 0 (- (count fn-type) (count arg-list))))
@@ -403,44 +399,25 @@
     :boolean :int8
     k))
 
-(defn ->transit
-  [data]
-  (let [out (ByteArrayOutputStream.)
-        w (transit/writer (io/output-stream out) :json)]
-    (transit/write w data)
-    (str out)))
-
-(defn <-transit
-  [^String s]
-  (let [in     (ByteArrayInputStream. (.getBytes s))
-        reader (transit/reader in :json)]
-    (transit/read reader)))
-
 (defn emit-fns
-  [cache records-json fns]
-  (let [fns (or (when (.exists (cache-file cache))
-                  (<-transit (slurp (cache-file cache))))
-                (into {}
-                      (for [f fns]
-                        (let [fn-name                        (if (string? f)
-                                                               f
-                                                               (first f))
-                              {:keys [wrapped?] :as options} (if (string? f)
-                                                               {:wrapped? true}
-                                                               (second f))
-                              definition                     (fn-type-def @records-json fn-name)]
-                          [(keyword (str (:name definition)))
-                           {:rettype  (let [rt (:return-type definition)
-                                            qt (qual-type @records-json rt)]
-                                        (if (pointer-arg-type? rt)
-                                          :pointer?
-                                          (->rettype (type->keyword (or qt rt)))))
+  [records-json fns]
+  (into {}
+        (for [f fns]
+          (let [fn-name                        (if (string? f)
+                                                 f
+                                                 (first f))
+                {:keys [wrapped?] :as options} (if (string? f)
+                                                 {:wrapped? true}
+                                                 (second f))
+                definition                     (fn-type-def @records-json fn-name)]
+            [(keyword (str (:name definition)))
+             {:rettype  (let [rt (:return-type definition)
+                              qt (qual-type @records-json rt)]
+                          (if (pointer-arg-type? rt)
+                            :pointer?
+                            (->rettype (type->keyword (or qt rt)))))
 
-                            :argtypes (apply emit-fn-arg-types @records-json definition (reduce concat options))}]))))]
-    (spit (doto (cache-file cache)
-            (io/make-parents))
-          (->transit fns))
-    fns))
+              :argtypes (apply emit-fn-arg-types @records-json definition (reduce concat options))}]))))
 
 (defn struct-name
   [t]
@@ -605,20 +582,9 @@
                     line))))
        (str/join "\n")))
 
-(defn emit*
-  [{:keys [cache records functions]}]
-  (if (.exists (cache-file cache))
-    (<-transit (slurp (cache-file cache)))
-    (let [result (emit-fns cache (delay (read-records-json records)) @functions)]
-      (spit (doto (cache-file cache)
-              (io/make-parents))
-            (->transit result))
-      result)))
-
 (defn emit
-  [function-bindings]
-  ;; TODO emit cache
-  (apply merge (map emit* function-bindings)))
+  [{:keys [records functions]}]
+  (emit-fns (delay (read-records-json records)) @functions))
 
 (defn emit-structs*
   [{:keys [records functions]}]
@@ -649,27 +615,30 @@
                            (vec sorted-structs)
                            (mapv first structs))))))
 
-(defn define-structs
-  [structs]
-  (let [{:keys [cache names records]} structs
-        cache-json                    (when (.exists (cache-file cache))
-                                        (<-transit (slurp (cache-file cache))))
-        records-txt                   (delay (read-records (:txt records)))
-        records-json                  (delay (read-records-json (:json records)))]
+(defn validate-defs!
+  [defs]
+  (doseq [[k v] defs]
+    (assert (pos? (:datatype-size v)) (str k " has zero size!"))))
 
-    (if cache-json
-      (do (doseq [[k v] cache-json]
-            (dtype-struct/define-datatype! k (:data-layout v)))
-          (into {} cache-json))
-      (let [result (for [struct-name @names]
-                     (let [k (csk/->kebab-case-keyword struct-name :separator \_)]
-                       [k (ffi-clang/defstruct-from-layout
-                            k
-                            (typedef->struct @records-json (layout @records-txt struct-name)))]))]
-        (spit (doto (cache-file cache)
-                (io/make-parents))
-              (->transit result))
-        (into {} result)))))
+(defn define-structs
+  [{:keys [names defs] :as cache-json}]
+  (validate-defs! defs)
+
+  (doseq [k names]
+    (let [v (get defs k)]
+      (dtype-struct/define-datatype! k (:data-layout v)))))
+
+(defn generate-structs
+  [structs]
+  (let [{:keys [names records]} structs
+        records-txt             (delay (read-records (:txt records)))
+        records-json            (delay (read-records-json (:json records)))]
+    {:names (map #(csk/->kebab-case-keyword % :separator \_) @names)
+     :defs  (into {} (for [struct-name @names]
+                       (let [k (csk/->kebab-case-keyword struct-name :separator \_)]
+                         [k (ffi-clang/defstruct-from-layout
+                              k
+                              (typedef->struct @records-json (layout @records-txt struct-name)))])))}))
 
 (defn export-wrapper-fns
   [{:keys [functions records output]} dest]
@@ -680,18 +649,12 @@
           (emit-implementation records-json :fns @functions))))
 
 (defn enums-map
-  [{:keys [cache records types]}]
-  (or (when (.exists (cache-file cache))
-        (<-transit (slurp (cache-file cache))))
-      (let [records-json (read-records-json (:json records))
-            result       (into {}
-                               (for [t types]
-                                 [(csk/->kebab-case-keyword t)
-                                  (into {} (mapv vector
-                                                 (range)
-                                                 (mapv #(csk/->kebab-case-keyword % :separator \_) (enum-values (:inner (get-def records-json :name t :kind "EnumDecl")))
-                                                       )))]))]
-        (spit (doto (cache-file cache)
-                (io/make-parents))
-              (->transit result))
-        result)))
+  [{:keys [records types]}]
+  (let [records-json (read-records-json (:json records))]
+    (into {}
+          (for [t types]
+            [(csk/->kebab-case-keyword t)
+             (into {} (mapv vector
+                            (range)
+                            (mapv #(csk/->kebab-case-keyword % :separator \_) (enum-values (:inner (get-def records-json :name t :kind "EnumDecl")))
+                                  )))]))))

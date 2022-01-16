@@ -1,32 +1,20 @@
 (ns godotclj.ffi.gdnative
   (:require [godotclj.ffi.clang :as clang]
             [godotclj.ffi.defs :as defs]
-            [tech.v3.datatype.ffi :as dtype-ffi]))
+            [godotclj.ffi.generator :as generator]
+            [tech.v3.datatype.ffi :as dtype-ffi]
+            [clojure.java.io :as io]))
 
-(def godot-struct-defs*
-  (clang/define-structs defs/godot-structs))
-
-(def wrapper-struct-defs*
-  (clang/define-structs defs/wrapper-structs))
-
-(def callback-struct-defs*
-  (clang/define-structs defs/callback-structs))
-
-(defn validate-defs!
-  [defs]
-  (doseq [[k v] defs]
-    (assert (pos? (:datatype-size v)) (str k " has zero size!")))
-  nil)
-
-(validate-defs! godot-struct-defs*)
-(validate-defs! wrapper-struct-defs*)
-(validate-defs! callback-struct-defs*)
+(def struct-defs*
+  ;; TODO put in function or delay (since it reads from a file, this probably
+  ;; shouldn't happen at compile time
+  (clang/define-structs (generator/load-cache (generator/cache-path (:cache defs/structs)))))
 
 (def enums
-  (clang/enums-map defs/enums))
+  (generator/load-cache (generator/cache-path (:cache defs/enums))))
 
 (def fns
-  (clang/emit defs/function-bindings))
+  (generator/load-cache (generator/cache-path (:cache defs/function-bindings))))
 
 (defonce ^:private lib (dtype-ffi/library-singleton #'fns))
 

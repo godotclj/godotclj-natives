@@ -9,10 +9,16 @@
           path))
       (io/file "godotclj.edn")))
 
+(defn overrides-config-file
+  "Override config keys -- used by godotclj to set the callbacks namespace"
+  []
+  (io/resource "godotclj.overrides.edn"))
+
 (defn get-config
   []
-  (merge {:callbacks {:namespace "godotclj.ffi.callback"}}
-         (-> (config-file) slurp edn/read-string)))
+  (merge {:callbacks {:namespace "godotclj.ffi.callback-stub"}}
+         (some-> (config-file) slurp edn/read-string)
+         (some-> (overrides-config-file) slurp edn/read-string)))
 
 (defn get-main
   [config {:keys [runtime]}]

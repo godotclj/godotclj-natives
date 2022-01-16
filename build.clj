@@ -19,7 +19,13 @@
                 :version   version
                 :basis     basis
                 :src-dirs  ["src/clojure"]})
-  (b/copy-dir {:src-dirs   ["src/clojure" "build/lib" "build/godot-headers" "build/gen"]
+  (b/copy-dir {:src-dirs   ["src/clojure" "classes" "build/lib" "build/cache" "build/godot-headers"]
                :target-dir class-dir})
   (b/jar {:class-dir class-dir
           :jar-file jar-file}))
+
+(defn prep
+  "Prepare library for use from another deps project"
+  [_]
+  (b/process {:command-args ["git" "submodule" "update" "--init" "--recursive"]})
+  (b/process {:command-args ["make" "ARCH=linux_64"]}))

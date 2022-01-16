@@ -2,6 +2,6 @@
 
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
-export JAVA_TOOL_OPTIONS=-Dgodotclj.config.path=$DIR/../godotclj-test.edn
+export JAVA_TOOL_OPTIONS="-Dgodotclj.config.path=$DIR/../godotclj-test.edn $JAVA_TOOL_OPTIONS"
 
 cd $DIR/.. && clj -M -e "(require 'godotclj.runner) (godotclj.runner/start \"-v\")"
