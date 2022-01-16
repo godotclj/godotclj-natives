@@ -11,7 +11,9 @@
 (def jar-file (format "target/%s.jar" (name lib)))
 
 (defn clean [_]
-  (b/delete {:path "target"}))
+  (b/delete {:path "target"})
+  (b/delete {:path "build"})
+  (b/delete {:path "classes"}))
 
 (defn jar [_]
   (b/write-pom {:class-dir class-dir
